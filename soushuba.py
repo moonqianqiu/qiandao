@@ -70,10 +70,10 @@ class SouShuBaClient:
         self.questionid = questionid
         self.answer = answer
         self._common_headers = {
-            "Host": f"{ hostname }",
+            "Host": f"{hostname}",
             "Connection": "keep-alive",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7444.59 Safari/537.36",
             "Accept-Language": "zh-CN,cn;q=0.9",
             "Content-Type": "application/x-www-form-urlencoded",
         }
@@ -136,16 +136,36 @@ class SouShuBaClient:
             return message
         # 收集可能的修改方式
         modifications = []
-        # 添加表情符号（30%概率）
+        # 添加表情符号GBK（30%概率）
         if random.random() < 0.3:
-            emoji_sets = [
-                ["😊", "👍", "🌟"],  # 基础正面表情
-                ["✨", "🌸", "☀️"],  # 自然主题
-                ["💪", "🔥", "⭐️"],  # 鼓励主题
-                ["😄", "😌", "😇"],  # 表情主题
+            # 基础正面表情
+            kaoemoji_sets = [
+                ["^_^", "(^_^)", "^-^"],  # 笑脸
+                ["(^o^)/", "(*^o^*)", "~\(^^)/~"],  # 开心
+                ["＊", "◎", "〃"],  # 星星装饰
             ]
-            emoji = random.choice(random.choice(emoji_sets))
-            modifications.append(lambda msg, e=emoji: f"{msg} {e}")
+            # 自然/装饰主题
+            nature_sets = [
+                ["◎", "※", "＊"],  # 装饰符号
+                ["~", "℃", "°"],  # 常用符号
+                ["【】", "()", "《》"],  # 书名号/括号
+            ]
+            # 鼓励主题
+            encouragement_sets = [
+                ["加油！", "努力！", "奋斗！"],  # 直接使用文字
+                ["(O_O)", "(Go!)", "(^^)v"],  # 颜文字
+                ["^", ">", ">>"],  # 箭头符号
+            ]
+            # 表情主题
+            expression_sets = [
+                ["(O_O)", "(^^)", "(^^)"],  # 开心颜文字
+                ["(~_~)", "(=_=)", "(~_~)"],  # 平静
+                ["(O_O)", "(o_o)", "(OwO)"],  # 可爱
+            ]
+            all_sets = [kaoemoji_sets, nature_sets, encouragement_sets, expression_sets]
+            selected_set = random.choice(all_sets)
+            kaoemoji = random.choice(selected_set)
+            modifications.append(lambda msg, e=kaoemoji: f"{msg} {e}")
         # 微调标点符号（25%概率）
         if random.random() < 0.25:
             punctuation_mods = [
@@ -247,9 +267,15 @@ class SouShuBaClient:
             used_messages.append(base_message) 
             # 对消息进行随机修改
             final_message = self._random_modify_message(base_message)
-            
+            # 编码为GBK，忽略无法编码的字符
+            try:
+                encoded_message = final_message.encode('gbk')
+            except UnicodeEncodeError:
+                # 如果编码失败，尝试忽略无法编码的字符
+                encoded_message = final_message.encode('gbk', errors='ignore')
+                logger.warning(f"消息包含无法编码的字符，已过滤: {final_message}")
             payload = {
-                "message": final_message.encode("GBK"),
+                "message": encoded_message,
                 "addsubmit": "true",
                 "spacenote": "true",
                 "referer": "home.php",
