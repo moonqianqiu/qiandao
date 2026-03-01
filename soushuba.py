@@ -29,7 +29,7 @@ logger.addHandler(ch)
 
 def get_refresh_url(url: str):
     try:
-        response = requests.get(url)
+        response = requests.get(url, verify=False)
         if response.status_code != 403:
             response.raise_for_status()
 
@@ -141,7 +141,7 @@ class SouShuBaClient:
             # 基础正面表情
             kaoemoji_sets = [
                 ["^_^", "(^_^)", "^-^"],  # 笑脸
-                ["(^o^)/", "(*^o^*)", "~\(^^)/~"],  # 开心
+                ["(^o^)/", "(*^o^*)", "~\\(^^)/~"],  # 开心
                 ["＊", "◎", "〃"],  # 星星装饰
             ]
             # 自然/装饰主题
